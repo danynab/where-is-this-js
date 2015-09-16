@@ -127,6 +127,7 @@ window.onload = function initialize() {
 
 function resetGame() {
   button.className = button.className.replace('green', 'gray');
+  button.className = button.className.replace('hide', '');
   round = 0;
   hideAlert();
   newRound();
@@ -170,6 +171,8 @@ function newRound() {
 
     round +=1;
   } else {
+    button.className = button.className + 'hide';
+    hideToast();
     showAlert();
   }
 }

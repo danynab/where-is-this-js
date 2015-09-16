@@ -95,7 +95,12 @@ h1.hide {
   left: calc(50% - 60px);
   position: fixed;
   text-align: center;
+  transition: bottom 0.6s ease-in-out;
   z-index: 500;
+}
+
+#button.hide {
+  bottom: -100px;
 }
 
 #map {
