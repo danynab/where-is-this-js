@@ -11,10 +11,10 @@ var circles = [];
 var imagesShowed = [];
 
 var toastTexts = [
-  '<span class="bold">Yay!</span> You were really close. Just ## km away.',
-  '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.',
-  '<span class="bold">Oops!</span> That is not even close. The place if ## km from where you said.',
-  '<span class="bold">Nop ;)</span> You failed. The place is ## km away.'
+  '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.', // 400 points
+  '<span class="bold">Yay!</span> You were really close. Just ## km away.', // 100 points
+  '<span class="bold">Oops!</span> That is not even close. The place if ## km away from where you said.', // 0 points
+  '<span class="bold">Nop ;)</span> You failed. The place too far from here.' // -200 points
 ]
 
 var imagesArray = [{
