@@ -6,6 +6,7 @@ var toast;
 var img;
 var button;
 var line;
+var circles = [];
 
 var imagesShowed = [];
 
@@ -133,6 +134,8 @@ function newRound() {
   if (line != null) {
     line.setMap(null);
   }
+  clearCircles();
+  
   document.getElementById("pictureWrapper").className = '';
   document.getElementById("title").className = '';
 
@@ -142,17 +145,17 @@ function newRound() {
   button.children[0].innerHTML = 'Check';
 
   toast.className = '';
-  
+
   if (imagesArray.length == imagesShowed.length) {
 	imagesShowed = [];
   }
-  
+
   imageIndex = -1;
   while(imageIndex == -1 || imagesShowed.indexOf(imageIndex) != -1) {
 	  imageIndex = Math.floor(Math.random() * imagesArray.length);
   }
   imagesShowed.push(imageIndex);
-  
+
   image = imagesArray[imageIndex];
   img.src = image.url;
 
@@ -220,7 +223,7 @@ function check() {
     pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
     pano.bindTo("position", markerImage);
   });
-  
+
   document.getElementById("pictureWrapper").className = 'hide';
   document.getElementById("title").className = 'hide';
 
@@ -229,22 +232,13 @@ function check() {
 
     distance = getDistance(markerImage.getPosition(), markerSelected.getPosition());
 
-    var latImage = markerImage.getPosition().lat();
-    var lngImage = markerImage.getPosition().lng();
-    var latSelected = markerSelected.getPosition().lat();
-    var lngSelected = markerSelected.getPosition().lng();
-
-    bounds.extend(new google.maps.LatLng(latImage, lngImage));
-    bounds.extend(new google.maps.LatLng(latSelected, lngSelected));
+    bounds.extend(markerImage.getPosition());
+    bounds.extend(markerSelected.getPosition());
     map.fitBounds(bounds);
 
-    line = new google.maps.Polyline({
-      path: [markerImage.getPosition(), markerSelected.getPosition()],
-      geodesic: false,
-      strokeColor: '#FF0000',
-      strokeOpacity: 1.0,
-      strokeWeight: 2
-    });
+    drawCircles(distance, markerImage.getPosition());
+
+    drawLine(markerImage.getPosition(), markerSelected.getPosition())
 
     line.setMap(map);
   } else {
@@ -258,4 +252,65 @@ function check() {
   button.onclick = newRound;
   button.className = button.className.replace('blue', 'grey');
   button.children[0].innerHTML = 'Next';
+}
+
+function drawLine(positionA, positionB) {
+  line = new google.maps.Polyline({
+    path: [positionA, positionB],
+    geodesic: false,
+    strokeColor: '#2196F3',
+    strokeOpacity: 1.0,
+    strokeWeight: 2
+  });
+}
+
+function clearCircles() {
+  circles.forEach(function(circle) {
+      circle.setMap(null);
+  });
+  circles = [];
+}
+
+function drawCircles(distance, position) {
+  var circle = new google.maps.Circle({
+    geodesic: false,
+    strokeColor: '#F44336',
+    strokeOpacity: 0.7,
+    strokeWeight: 2,
+    fillColor: '#F44336',
+    fillOpacity: 0.35,
+    map: map,
+    center: position,
+    radius: 2000*1000
+  });
+
+  circles.push(circle);
+
+  circle = new google.maps.Circle({
+    geodesic: false,
+    strokeColor: '#FFC107',
+    strokeOpacity: 0.7,
+    strokeWeight: 2,
+    fillColor: '#FFC107',
+    fillOpacity: 0.35,
+    map: map,
+    center: position,
+    radius: 200*1000
+  });
+
+  circles.push(circle);
+
+  circle = new google.maps.Circle({
+    geodesic: false,
+    strokeColor: '#8BC34A',
+    strokeOpacity: 0.7,
+    strokeWeight: 2,
+    fillColor: '#8BC34A',
+    fillOpacity: 0.35,
+    map: map,
+    center: position,
+    radius: 20*1000
+  });
+
+  circles.push(circle);
 }
