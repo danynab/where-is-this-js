@@ -10,10 +10,10 @@ var line;
 var imagesShowed = [];
 
 var toastTexts = [
-  '<span class="bold">Yay!</span> You were really close. Just ## km away.',
-  '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.',
-  '<span class="bold">Oops!</span> That is not even close. The place if ## km from where you said.',
-  '<span class="bold">Nop ;)</span> You failed. The place is ## km away.'
+  '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.', // 400 points
+  '<span class="bold">Yay!</span> You were really close. Just ## km away.', // 100 points
+  '<span class="bold">Oops!</span> That is not even close. The place if ## km away from where you said.', // 0 points
+  '<span class="bold">Nop ;)</span> You failed. The place too far from here.' // -200 points
 ]
 
 var imagesArray = [{
@@ -142,17 +142,17 @@ function newRound() {
   button.children[0].innerHTML = 'Check';
 
   toast.className = '';
-  
+
   if (imagesArray.length == imagesShowed.length) {
 	imagesShowed = [];
   }
-  
+
   imageIndex = -1;
   while(imageIndex == -1 || imagesShowed.indexOf(imageIndex) != -1) {
 	  imageIndex = Math.floor(Math.random() * imagesArray.length);
   }
   imagesShowed.push(imageIndex);
-  
+
   image = imagesArray[imageIndex];
   img.src = image.url;
 
@@ -220,7 +220,7 @@ function check() {
     pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
     pano.bindTo("position", markerImage);
   });
-  
+
   document.getElementById("pictureWrapper").className = 'hide';
   document.getElementById("title").className = 'hide';
 
