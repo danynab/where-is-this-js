@@ -1,28 +1,29 @@
 var map;
 var markerSelected;
-var imageIndex = -1;
 var markerImage;
-var toast;
-var img;
+
 var button;
 var line;
 var circles = [];
-var points = 0;
+
+var points;
+var pointsArray = [400, 100, 0, -100];
 
 var distances = [150, 700, 1500];
 
-var imagesShowed = [];
-
 var roundsCount = 5;
-var round = 0;
+var round;
 
+var toast;
 var toastTexts = [
   '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.', // 400 points
   '<span class="bold">Yay!</span> You were really close. Just ## km away.', // 100 points
   '<span class="bold">Oops!</span> That is not even close. The place if ## km away from where you said.', // 0 points
-  '<span class="bold">Nop ;)</span> You failed. The place is too far from here.' // -200 points
+  '<span class="bold">Nop ;)</span> You failed. The place is too far from here.' // -100 points
 ]
 
+var imageIndex;
+var imagesShowed = [];
 var imagesArray = [{
   'url': 'img/places/1.jpg',
   'description': 'Eiffel Tower',
@@ -95,7 +96,7 @@ var imagesArray = [{
   'lng': 2.1744
 }]
 
-window.onload = function initialize() {
+window.onload = function() {
   var latlng = new google.maps.LatLng(0, 0);
   var mapOptions = {
     zoom: 2,
@@ -112,15 +113,19 @@ window.onload = function initialize() {
     overviewMapControl: true
   };
 
-  map = new google.maps.Map(document.getElementById("map"), mapOptions);
+  map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
   google.maps.event.addListener(map, 'click', function(event) {
     setMarker(event.latLng);
   });
 
-  button = document.getElementById("button");
-  toast = document.getElementById("toast");
-  img = document.getElementById("picturePanel");
+  button = document.getElementById('button');
+  toast = document.getElementById('toast');
+
+  imageIndex = Math.floor(Math.random() * imagesArray.length);
+
+  points = 0;
+  round = 0;
 
   newRound();
 }
@@ -129,52 +134,57 @@ function resetGame() {
   button.className = button.className.replace('green', 'gray');
   button.className = button.className.replace('hide', '');
   round = 0;
-  hideAlert();
+  points = 0;
+  imageIndex = Math.floor(Math.random() * imagesArray.length);
+  imagesShowed = [];
+  hideScoreAlert();
   newRound();
 }
 
-function newRound() {
-  if (round < roundsCount) {
-    map.setZoom(2);
-    map.setCenter(new google.maps.LatLng(0, 0));
+function clearMap() {
+  map.setZoom(2);
+  map.setCenter(new google.maps.LatLng(0, 0));
 
-    if (markerSelected != null) {
-      markerSelected.setMap(null);
-      markerSelected = null;
-    }
-    if (markerImage != null) {
-      markerImage.setMap(null);
-      markerImage = null;
-    }
-    if (line != null) {
-      line.setMap(null);
-    }
-    clearCircles();
-
-    document.getElementById("pictureWrapper").className = '';
-    document.getElementById("title").className = '';
-
-    button.onclick = check;
-
-    button.children[0].innerHTML = 'Check';
-
-    toast.className = '';
-
-    imageIndex = -1;
-    while (imageIndex == -1 || imagesShowed.indexOf(imageIndex) != -1) {
-      imageIndex = Math.floor(Math.random() * imagesArray.length);
-    }
-    imagesShowed.push(imageIndex);
-
-    image = imagesArray[imageIndex];
-    img.src = image.url;
-
-    round +=1;
-  } else {
-    button.className = button.className + 'hide';
-    hideToast();
-    showAlert();
+  if (markerSelected != null) {
+    markerSelected.setMap(null);
+    markerSelected = null;
   }
+  if (markerImage != null) {
+    markerImage.setMap(null);
+    markerImage = null;
+  }
+  if (line != null) {
+    line.setMap(null);
+  }
+  clearCircles();
+}
+
+function newRound() {
+  clearMap();
+
+  document.getElementById('pictureWrapper').className = '';
+  document.getElementById('title').className = '';
+
+  button.onclick = check;
+  button.children[0].innerHTML = 'Check';
+
+  hideToast();
+
+  while (imagesShowed.indexOf(imageIndex) != -1) {
+    imageIndex = Math.floor(Math.random() * imagesArray.length);
+  }
+  imagesShowed.push(imageIndex);
+
+  image = imagesArray[imageIndex];
+  document.getElementById('picturePanel').src = image.url;
+
+  round += 1;
+}
+
+function showScore() {
+  button.className = button.className + 'hide';
+  hideToast();
+  showScoreAlert();
 }
 
 function setMarker(location) {
@@ -193,15 +203,8 @@ function setMarker(location) {
   }
 }
 
-function getDistance(p1, p2) {
-  return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000;
-}
-
 function check() {
   if (markerSelected != null) {
-
-    var bounds = new google.maps.LatLngBounds();
-
     markerImage = new google.maps.Marker({
       position: {
         lat: imagesArray[imageIndex].lat,
@@ -211,81 +214,76 @@ function check() {
       map: map,
       icon: 'img/flag.png'
     })
-    var contentString = '<h3>' + imagesArray[imageIndex].description + '</h3><div id="content" style="width:400px;height:300px;"></div>';
 
-    var infowindow = new google.maps.InfoWindow({
-      content: contentString
-    });
-    markerImage.addListener('click', function() {
-      infowindow.open(map, markerImage);
-      pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
-      pano.bindTo("position", markerImage);
-    });
+    setStreetView(imagesArray[imageIndex].description, markerImage);
 
-    document.getElementById("pictureWrapper").className = 'hide';
-    document.getElementById("title").className = 'hide';
+    document.getElementById('pictureWrapper').className = 'hide';
+    document.getElementById('title').className = 'hide';
 
     markerSelected.setDraggable(false);
 
-    distance = getDistance(markerImage.getPosition(), markerSelected.getPosition());
-
+    var bounds = new google.maps.LatLngBounds();
     bounds.extend(markerImage.getPosition());
     bounds.extend(markerSelected.getPosition());
     map.fitBounds(bounds);
 
+    distance = getDistance(markerImage.getPosition(), markerSelected.getPosition());
     drawCircles(distance, markerImage.getPosition());
-
     drawLine(markerImage.getPosition(), markerSelected.getPosition())
-
-    line.setMap(map);
 
     showToast(distance);
 
-    button.onclick = newRound;
     if (round == roundsCount) {
       button.className = button.className.replace('blue', 'green');
       button.children[0].innerHTML = 'Show score';
+      button.onclick = showScore;
     } else {
       button.className = button.className.replace('blue', 'gray');
       button.children[0].innerHTML = 'Next';
+      button.onclick = newRound;
     }
   }
 }
 
-
+function setStreetView(description, marker) {
+  var infowindow = new google.maps.InfoWindow({
+    content: '<h3>' + description + '</h3><div id="content" style="width:400px;height:300px;"></div>'
+  });
+  markerImage.addListener('click', function() {
+    infowindow.open(map, marker);
+    pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
+    pano.bindTo('position', markerImage);
+  });
+}
 
 function showToast(distance) {
-  var textIndex;
-  if (distance != -1) {
-    if (distance < distances[0]) {
-      textIndex = 0;
-      points = points + 400;
-    } else if (distance < distances[1]) {
-      textIndex = 1;
-      points = points + 100;
-    } else if (distance < distances[2]) {
-      textIndex = 2;
-    } else {
-      points = points - 200;
-      textIndex = 3;
-    }
-    toast.innerHTML = toastTexts[textIndex].replace('##', Math.floor(distance)) + '<span id="dismiss" onclick="hideToast()" class="label label-blue">Dismiss</span>';
-    toast.className = 'active';
+  var index;
+  if (distance < distances[0]) {
+    index = 0;
+  } else if (distance < distances[1]) {
+    index = 1;
+  } else if (distance < distances[2]) {
+    index = 2;
+  } else {
+    index = 3;
   }
+  points = points + pointsArray[index];
+  toast.innerHTML = toastTexts[index].replace('##', Math.floor(distance)) + '<span id="dismiss" onclick="hideToast()" class="label label-blue">Dismiss</span>';
+  toast.className = 'active';
 }
 
 function hideToast() {
   toast.className = '';
 }
 
-function showAlert() {
-  var alert = document.getElementById("alert");
+function showScoreAlert() {
+  var alert = document.getElementById('alert');
   alert.className = 'panel show';
-  alert.innerHTML = alert.innerHTML.replace('##', points);
+  document.getElementById('score').innerHTML = "You've finished and obtained " + points + " points."
 }
 
-function hideAlert() {
-  document.getElementById("alert").className = 'panel';
+function hideScoreAlert() {
+  document.getElementById('alert').className = 'panel';
 }
 
 function drawLine(positionA, positionB) {
@@ -296,6 +294,7 @@ function drawLine(positionA, positionB) {
     strokeOpacity: 1.0,
     strokeWeight: 2
   });
+  line.setMap(map);
 }
 
 function clearCircles() {
@@ -347,4 +346,8 @@ function drawCircles(distance, position) {
   });
 
   circles.push(circle);
+}
+
+function getDistance(p1, p2) {
+  return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000;
 }
