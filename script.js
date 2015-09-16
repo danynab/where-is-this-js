@@ -7,8 +7,14 @@ var img;
 var button;
 var line;
 var circles = [];
+var points = 0;
+
+var distances = [150, 700, 1500];
 
 var imagesShowed = [];
+
+var roundsCount = 5;
+var round = 0;
 
 var toastTexts = [
   '<span class="bold">Nice work!</span> You nailed it. You are just ## km away.', // 400 points
@@ -119,46 +125,53 @@ window.onload = function initialize() {
   newRound();
 }
 
+function resetGame() {
+  button.className = button.className.replace('green', 'gray');
+  round = 0;
+  hideAlert();
+  newRound();
+}
+
 function newRound() {
-  map.setZoom(2);
-  map.setCenter(new google.maps.LatLng(0, 0));
+  if (round < roundsCount) {
+    map.setZoom(2);
+    map.setCenter(new google.maps.LatLng(0, 0));
 
-  if (markerSelected != null) {
-    markerSelected.setMap(null);
-    markerSelected = null;
+    if (markerSelected != null) {
+      markerSelected.setMap(null);
+      markerSelected = null;
+    }
+    if (markerImage != null) {
+      markerImage.setMap(null);
+      markerImage = null;
+    }
+    if (line != null) {
+      line.setMap(null);
+    }
+    clearCircles();
+
+    document.getElementById("pictureWrapper").className = '';
+    document.getElementById("title").className = '';
+
+    button.onclick = check;
+
+    button.children[0].innerHTML = 'Check';
+
+    toast.className = '';
+
+    imageIndex = -1;
+    while (imageIndex == -1 || imagesShowed.indexOf(imageIndex) != -1) {
+      imageIndex = Math.floor(Math.random() * imagesArray.length);
+    }
+    imagesShowed.push(imageIndex);
+
+    image = imagesArray[imageIndex];
+    img.src = image.url;
+
+    round +=1;
+  } else {
+    showAlert();
   }
-  if (markerImage != null) {
-    markerImage.setMap(null);
-    markerImage = null;
-  }
-  if (line != null) {
-    line.setMap(null);
-  }
-  clearCircles();
-  
-  document.getElementById("pictureWrapper").className = '';
-  document.getElementById("title").className = '';
-
-  button.onclick = check;
-
-  button.className = button.className.replace('grey', 'blue');
-  button.children[0].innerHTML = 'Check';
-
-  toast.className = '';
-
-  if (imagesArray.length == imagesShowed.length) {
-	imagesShowed = [];
-  }
-
-  imageIndex = -1;
-  while(imageIndex == -1 || imagesShowed.indexOf(imageIndex) != -1) {
-	  imageIndex = Math.floor(Math.random() * imagesArray.length);
-  }
-  imagesShowed.push(imageIndex);
-
-  image = imagesArray[imageIndex];
-  img.src = image.url;
-
 }
 
 function setMarker(location) {
@@ -170,9 +183,10 @@ function setMarker(location) {
       position: location,
       map: map,
       draggable: true,
-	  optimized: true,
+      optimized: true,
       animation: google.maps.Animation.DROP
     });
+    button.className = button.className.replace('gray', 'blue');
   }
 }
 
@@ -180,54 +194,34 @@ function getDistance(p1, p2) {
   return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000;
 }
 
-function showToast(distance) {
-  var textIndex;
-  if (distance != -1) {
-    if (distance < 20) {
-      textIndex = 0;
-    } else if (distance < 200) {
-      textIndex = 1
-    } else if (distance < 2000) {
-      textIndex = 2
-    } else {
-      textIndex = 3
-    }
-    toast.innerHTML = toastTexts[textIndex].replace('##', Math.floor(distance)) + '<span id="dismiss" onclick="hideToast()" class="label label-blue">Dismiss</span>';
-    toast.className = 'active';
-  }
-}
-
-function hideToast() {
-  toast.className = '';
-}
-
 function check() {
-  var bounds = new google.maps.LatLngBounds();
-
-  markerImage = new google.maps.Marker({
-    position: {
-      lat: imagesArray[imageIndex].lat,
-      lng: imagesArray[imageIndex].lng
-    },
-    animation: google.maps.Animation.BOUNCE,
-    map: map,
-    icon: 'img/flag.png'
-  })
-  var contentString = '<h3>' + imagesArray[imageIndex].description + '</h3><div id="content" style="width:400px;height:300px;"></div>';
-
-  var infowindow = new google.maps.InfoWindow({
-    content: contentString
-  });
-  markerImage.addListener('click', function() {
-    infowindow.open(map, markerImage);
-    pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
-    pano.bindTo("position", markerImage);
-  });
-
-  document.getElementById("pictureWrapper").className = 'hide';
-  document.getElementById("title").className = 'hide';
-
   if (markerSelected != null) {
+
+    var bounds = new google.maps.LatLngBounds();
+
+    markerImage = new google.maps.Marker({
+      position: {
+        lat: imagesArray[imageIndex].lat,
+        lng: imagesArray[imageIndex].lng
+      },
+      animation: google.maps.Animation.BOUNCE,
+      map: map,
+      icon: 'img/flag.png'
+    })
+    var contentString = '<h3>' + imagesArray[imageIndex].description + '</h3><div id="content" style="width:400px;height:300px;"></div>';
+
+    var infowindow = new google.maps.InfoWindow({
+      content: contentString
+    });
+    markerImage.addListener('click', function() {
+      infowindow.open(map, markerImage);
+      pano = new google.maps.StreetViewPanorama(document.getElementById("content"));
+      pano.bindTo("position", markerImage);
+    });
+
+    document.getElementById("pictureWrapper").className = 'hide';
+    document.getElementById("title").className = 'hide';
+
     markerSelected.setDraggable(false);
 
     distance = getDistance(markerImage.getPosition(), markerSelected.getPosition());
@@ -241,17 +235,54 @@ function check() {
     drawLine(markerImage.getPosition(), markerSelected.getPosition())
 
     line.setMap(map);
-  } else {
-    map.panTo(markerImage.getPosition());
-    setTimeout("map.setZoom(14)", 500);
-    distance = -1;
+
+    showToast(distance);
+
+    button.onclick = newRound;
+    if (round == roundsCount) {
+      button.className = button.className.replace('blue', 'green');
+      button.children[0].innerHTML = 'Show score';
+    } else {
+      button.className = button.className.replace('blue', 'gray');
+      button.children[0].innerHTML = 'Next';
+    }
   }
+}
 
-  showToast(distance);
 
-  button.onclick = newRound;
-  button.className = button.className.replace('blue', 'grey');
-  button.children[0].innerHTML = 'Next';
+
+function showToast(distance) {
+  var textIndex;
+  if (distance != -1) {
+    if (distance < distances[0]) {
+      textIndex = 0;
+      points = points + 400;
+    } else if (distance < distances[1]) {
+      textIndex = 1;
+      points = points + 100;
+    } else if (distance < distances[2]) {
+      textIndex = 2;
+    } else {
+      points = points - 200;
+      textIndex = 3;
+    }
+    toast.innerHTML = toastTexts[textIndex].replace('##', Math.floor(distance)) + '<span id="dismiss" onclick="hideToast()" class="label label-blue">Dismiss</span>';
+    toast.className = 'active';
+  }
+}
+
+function hideToast() {
+  toast.className = '';
+}
+
+function showAlert() {
+  var alert = document.getElementById("alert");
+  alert.className = 'panel show';
+  alert.innerHTML = alert.innerHTML.replace('##', points);
+}
+
+function hideAlert() {
+  document.getElementById("alert").className = 'panel';
 }
 
 function drawLine(positionA, positionB) {
@@ -266,7 +297,7 @@ function drawLine(positionA, positionB) {
 
 function clearCircles() {
   circles.forEach(function(circle) {
-      circle.setMap(null);
+    circle.setMap(null);
   });
   circles = [];
 }
@@ -281,7 +312,7 @@ function drawCircles(distance, position) {
     fillOpacity: 0.35,
     map: map,
     center: position,
-    radius: 2000*1000
+    radius: distances[2] * 1000
   });
 
   circles.push(circle);
@@ -295,7 +326,7 @@ function drawCircles(distance, position) {
     fillOpacity: 0.35,
     map: map,
     center: position,
-    radius: 200*1000
+    radius: distances[1] * 1000
   });
 
   circles.push(circle);
@@ -309,7 +340,7 @@ function drawCircles(distance, position) {
     fillOpacity: 0.35,
     map: map,
     center: position,
-    radius: 20*1000
+    radius: distances[0] * 1000
   });
 
   circles.push(circle);
