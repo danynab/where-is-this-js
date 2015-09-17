@@ -11,7 +11,7 @@ var pointsArray = [400, 100, 0, -100];
 
 var distances = [150, 700, 1500];
 
-var roundsCount = 5;
+var roundsCount = 5; /* Max rounds */
 var round;
 
 var toast;
@@ -130,6 +130,10 @@ window.onload = function() {
   newRound();
 }
 
+/**
+ * Starts the game, setting default values for each UI element
+ * and reseting counters.
+ */
 function resetGame() {
   button.className = button.className.replace('green', 'gray');
   button.className = button.className.replace('hide', '');
@@ -141,6 +145,9 @@ function resetGame() {
   newRound();
 }
 
+/**
+ * Clear markers and custom drawings.
+ */
 function clearMap() {
   map.setZoom(2);
   map.setCenter(new google.maps.LatLng(0, 0));
@@ -159,6 +166,9 @@ function clearMap() {
   clearCircles();
 }
 
+/**
+ * Start a new round, showing a random image and updating UI accordingly.
+ */
 function newRound() {
   clearMap();
 
@@ -181,12 +191,19 @@ function newRound() {
   round += 1;
 }
 
+/**
+ * Shows the score obtained by the player,
+ * hidding all UI elements and displaying an alert message.
+ */ 
 function showScore() {
   button.className = button.className + 'hide';
   hideToast();
   showScoreAlert();
 }
 
+/**
+ * Place a marker on the map in the coordinates specified.
+ */
 function setMarker(location) {
   if (markerImage == null) {
     if (markerSelected != null) {
@@ -203,7 +220,13 @@ function setMarker(location) {
   }
 }
 
+/**
+ * Function called every time the user wants to check his answer.
+ * The solution of the round is showed in a new marker with
+ * streetview functionality.
+ */ 
 function check() {
+  /* Add marker */
   if (markerSelected != null) {
     markerImage = new google.maps.Marker({
       position: {
@@ -222,6 +245,7 @@ function check() {
 
     markerSelected.setDraggable(false);
 
+    /* Center map */
     var bounds = new google.maps.LatLngBounds();
     bounds.extend(markerImage.getPosition());
     bounds.extend(markerSelected.getPosition());
@@ -245,6 +269,9 @@ function check() {
   }
 }
 
+/**
+ * Set streetview for a given marker.
+ */
 function setStreetView(description, marker) {
   var infowindow = new google.maps.InfoWindow({
     content: '<h3>' + description + '</h3><div id="content" style="width:400px;height:300px;"></div>'
@@ -256,6 +283,9 @@ function setStreetView(description, marker) {
   });
 }
 
+/**
+ * Shows a toast with a message selected by the distance to the place.
+ */ 
 function showToast(distance) {
   var index;
   if (distance < distances[0]) {
@@ -272,20 +302,32 @@ function showToast(distance) {
   toast.className = 'active';
 }
 
+/**
+ * Hide the toast (if visible).
+ */ 
 function hideToast() {
   toast.className = '';
 }
 
+/**
+ * Shows an alert message with the score obtained by the player.
+ */ 
 function showScoreAlert() {
   var alert = document.getElementById('alert');
   alert.className = 'panel show';
   document.getElementById('score').innerHTML = "You've finished and obtained " + points + " points."
 }
 
+/**
+ * Hides the score alert (if visible).
+ */ 
 function hideScoreAlert() {
   document.getElementById('alert').className = 'panel';
 }
 
+/**
+ * Draws an straight line on the map, from positionA to potisionB.
+ */ 
 function drawLine(positionA, positionB) {
   line = new google.maps.Polyline({
     path: [positionA, positionB],
@@ -297,6 +339,9 @@ function drawLine(positionA, positionB) {
   line.setMap(map);
 }
 
+/**
+ * Clears the circles drawn in the map.
+ */ 
 function clearCircles() {
   circles.forEach(function(circle) {
     circle.setMap(null);
@@ -304,6 +349,10 @@ function clearCircles() {
   circles = [];
 }
 
+/**
+ * Draws circles on the map. This function is used to
+ * show score areas.
+ */ 
 function drawCircles(distance, position) {
   var circle = new google.maps.Circle({
     geodesic: false,
@@ -348,6 +397,9 @@ function drawCircles(distance, position) {
   circles.push(circle);
 }
 
+/**
+ * Returns the distance from p1 to p2.
+ */ 
 function getDistance(p1, p2) {
   return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000;
 }
